@@ -7,5 +7,6 @@
 Change traefik hosts
 
 ```bash
+docker network create web
 docker compose up -d
 ```
