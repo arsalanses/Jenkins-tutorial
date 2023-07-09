@@ -1,0 +1,150 @@
+services:
+  jenkins:
+    # image: myjenkins:latest
+    build: .
+    restart: unless-stopped
+    environment:
+      - "DOCKER_HOST=tcp://docker:2376"
+      - "DOCKER_TLS_VERIFY=1"
+      - "TZ=Asia/Tehran"
+      - "JAVA_OPTS=-Duser.timezone=Asia/Tehran"
+    volumes:
+      - "jenkins_data:/var/jenkins_home"
+      - "docker_certs_client:/var/jenkins_home/.docker"
+    networks:
+      - web
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50000:50000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.jenkins.rule=Host(`jenkins.example.com`)"
+      - "traefik.http.routers.jenkins.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jenkins.entrypoints=http,https"
+      - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
+
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    environment:
+      - "REGISTRY_FIELDS_ENVIRONMENT=production"
+      - "REGISTRY_HTTP_ADDR=0.0.0.0:8443"
+      # - "REGISTRY_HTTP_TLS_CERTIFICATE=/certs/registry.crt"
+      # - "REGISTRY_HTTP_TLS_KEY=/certs/registry.key"
+    volumes:
+      - "registry_data:/var/lib/registry"
+      # - "./certs:/certs"
+    networks:
+      - web
+    ports:
+      - "127.0.0.1:8443:8443"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.registry.rule=Host(`registry.example.com`)"
+      - "traefik.http.routers.registry.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.registry.entrypoints=http,https"
+      - "traefik.http.services.registry.loadbalancer.server.port=8443"
+
+  docker:
+    image: docker:dind
+    restart: unless-stopped
+    privileged: true
+    command: ["--insecure-registry", "registry.example.com"]
+    volumes:
+      - "docker_data:/var/lib/docker"
+      - "docker_certs:/certs"
+      - "docker_certs_client:/certs/client"
+      - "jenkins_data:/var/jenkins_home"
+    expose:
+      - "2376"
+
+  gitea:
+    image: gitea/gitea:1.19
+    restart: unless-stopped
+    environment:
+      - "TZ=Asia/Tehran"
+
+      - "DISABLE_REGISTRATION=true"
+      - "REGISTER_MANUAL_CONFIRM=true"
+      - "REQUIRE_SIGNIN_VIEW=true"
+
+      - "USER_UID=1000"
+      - "USER_GID=1000"
+    volumes:
+      - "gitea_data:/data"
+    networks:
+      - web
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "2222:22"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.example.com`)"
+      - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.gitea.entrypoints=http,https"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+  
+  traefik:
+    image: traefik:v2.10.3
+    restart: unless-stopped
+    command:
+      - "--serverstransport.insecureskipverify=true"
+
+      - "--log.level=ERROR"
+      - "--accesslog=true"
+      
+      - "--providers.docker=true"
+      - "--providers.docker.network=web"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/configs/"
+      - "--providers.file.watch=true"
+      
+      - "--api=true"
+      - "--api.dashboard=true"
+
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http"
+      - "--certificatesresolvers.letsencrypt.acme.email=example@gmail.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=acme.json"
+
+      - "--global.sendAnonymousUsage=false"
+    networks:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./acme.json:/acme.json"
+      - "./configs/:/configs/"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefikpanel.entrypoints=http,https"
+      - "traefik.http.routers.traefikpanel.rule=Host(`traefik-jenkins.example.com`)"
+      - "traefik.http.routers.traefikpanel.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefikpanel.service=api@internal"
+      - "traefik.http.middlewares.traefikpanel-auth.basicauth.users=admin:$2y$05$BosxXh5rNpbfB8LrXJzyYZLIZi"
+      - "traefik.http.routers.traefikpanel.middlewares=traefikpanel-auth"
+
+volumes:
+  jenkins_data:
+  registry_data:
+  docker_data:
+  docker_certs:
+  docker_certs_client:
+  gitea_data:
+
+networks:
+  web:
+    external: true
