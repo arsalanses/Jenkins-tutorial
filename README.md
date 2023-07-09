@@ -7,6 +7,7 @@
 Change traefik hosts
 
 ```bash
+chmod 600 acme.json
 docker network create web
 docker compose up -d
 ```
