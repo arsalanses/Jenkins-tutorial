@@ -78,7 +78,7 @@ services:
       - web
     ports:
       - "127.0.0.1:3000:3000"
-      - "2222:22"
+      # - "127.0.0.1:2222:22"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -86,6 +86,10 @@ services:
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.routers.gitea.entrypoints=http,https"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+
+      - "traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.gitea-ssh.entrypoints=ssh"
+      - "traefik.tcp.services.gitea-ssh.loadbalancer.server.port=22"
   
   traefik:
     image: traefik:v2.10.3
@@ -107,7 +111,9 @@ services:
 
       - "--entrypoints.http.address=:80"
       - "--entrypoints.https.address=:443"
+      - "--entrypoints.ssh.address=:2222"
 
+      # - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http"
       - "--certificatesresolvers.letsencrypt.acme.email=example@gmail.com"
@@ -119,6 +125,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "2222:2222"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./acme.json:/acme.json"
