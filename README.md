@@ -11,3 +11,6 @@ chmod 600 acme.json
 docker network create web
 docker compose up -d
 ```
+
+### No valid crumb
+- manage > configureSecurity > CSRF Protection > Enable proxy compatibility
