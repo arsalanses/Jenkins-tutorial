@@ -28,7 +28,7 @@ RUN jenkins-plugin-cli --plugins \
   credentials-binding \
   rebuild \
   run-condition \
-  # ssh \
+  ssh \
   publish-over-ssh \
   copyartifact \
   metrics \
@@ -75,7 +75,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y docker-c
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
 
-RUN pip install wheel && pip install ansible
+RUN pip install --break-system-packages wheel && pip install --break-system-packages ansible
 
 ##### Install kubernetes client
 
@@ -107,11 +107,11 @@ RUN curl -LO "https://get.pulumi.com/releases/sdk/pulumi-v$(curl -sL https://www
 
 ##### Install maasta
 
-RUN pip install maasta
+RUN pip install --break-system-packages maasta
 
 ##### Install tf2
 
-RUN pip install tf2project
+RUN pip install --break-system-packages tf2project
 
 USER jenkins
 
