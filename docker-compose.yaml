@@ -48,7 +48,7 @@ services:
       - "traefik.http.services.registry.loadbalancer.server.port=8443"
 
   docker:
-    image: docker:dind
+    image: docker:24-dind
     restart: unless-stopped
     privileged: true
     command: ["--insecure-registry", "registry.example.com"]
