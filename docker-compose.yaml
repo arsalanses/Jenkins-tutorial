@@ -1,7 +1,7 @@
 services:
   jenkins:
     # image: myjenkins:latest
-    build: .
+    build: mini.Dockerfile
     restart: unless-stopped
     environment:
       - "DOCKER_HOST=tcp://docker:2376"
@@ -60,36 +60,36 @@ services:
     expose:
       - "2376"
 
-  gitea:
-    image: gitea/gitea:1.19
-    restart: unless-stopped
-    environment:
-      - "TZ=Asia/Tehran"
+  # gitea:
+  #   image: gitea/gitea:1.19
+  #   restart: unless-stopped
+  #   environment:
+  #     - "TZ=Asia/Tehran"
 
-      - "DISABLE_REGISTRATION=true"
-      - "REGISTER_MANUAL_CONFIRM=true"
-      - "REQUIRE_SIGNIN_VIEW=true"
+  #     - "DISABLE_REGISTRATION=true"
+  #     - "REGISTER_MANUAL_CONFIRM=true"
+  #     - "REQUIRE_SIGNIN_VIEW=true"
 
-      - "USER_UID=1000"
-      - "USER_GID=1000"
-    volumes:
-      - "gitea_data:/data"
-    networks:
-      - web
-    ports:
-      - "127.0.0.1:3000:3000"
-      # - "127.0.0.1:2222:22"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=web"
-      - "traefik.http.routers.gitea.rule=Host(`gitea.example.com`)"
-      - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.gitea.entrypoints=http,https"
-      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+  #     - "USER_UID=1000"
+  #     - "USER_GID=1000"
+  #   volumes:
+  #     - "gitea_data:/data"
+  #   networks:
+  #     - web
+  #   ports:
+  #     - "127.0.0.1:3000:3000"
+  #     # - "127.0.0.1:2222:22"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=web"
+  #     - "traefik.http.routers.gitea.rule=Host(`gitea.example.com`)"
+  #     - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
+  #     - "traefik.http.routers.gitea.entrypoints=http,https"
+  #     - "traefik.http.services.gitea.loadbalancer.server.port=3000"
 
-      - "traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.gitea-ssh.entrypoints=ssh"
-      - "traefik.tcp.services.gitea-ssh.loadbalancer.server.port=22"
+  #     - "traefik.tcp.routers.gitea-ssh.rule=HostSNI(`*`)"
+  #     - "traefik.tcp.routers.gitea-ssh.entrypoints=ssh"
+  #     - "traefik.tcp.services.gitea-ssh.loadbalancer.server.port=22"
   
   traefik:
     image: traefik:v2.10.3
@@ -150,7 +150,7 @@ volumes:
   docker_data:
   docker_certs:
   docker_certs_client:
-  gitea_data:
+  # gitea_data:
 
 networks:
   web:
